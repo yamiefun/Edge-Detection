@@ -246,7 +246,10 @@ def main():
         img_name = os.path.split(args.image)
         img_name = img_name[-1]
         img_name = img_name[:-4]
-        filename = f'images/output/{img_name}_canny_{str(args.high)}_{str(args.low)}.png'
+        filename = (
+            f'images/output/{img_name}_canny_'
+            f'{str(args.high)}_{str(args.low)}.png'
+        )
         save_image(ret, filename)
 
 

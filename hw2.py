@@ -19,6 +19,12 @@ def get_argument():
     argp.add_argument("-task",
                       help="choose assignment task", required=True,
                       type=int)
+    argp.add_argument("-high",
+                      help="high thresh ratio for double thresh",
+                      type=float, default=0.09)
+    argp.add_argument("-low",
+                      help="low thresh ratio for double thresh",
+                      type=float, default=0.05)
     args = argp.parse_args()
     return args
 
@@ -183,8 +189,6 @@ def hysteresis(image, strong_value, weak_value):
                                 (image[i+1][j-1] == strong_value) or
                                 (image[i+1][j+1] == strong_value)):
                             image[i][j] = strong_value
-                        else:
-                            image[i][j] = 0
                     except Exception:
                         pass
         if not np.array_equal(image, preserve_img):
@@ -192,15 +196,21 @@ def hysteresis(image, strong_value, weak_value):
         else:
             break
 
+    for i in range(image.shape[0]):
+        for j in range(image.shape[1]):
+            if image[i][j] == weak_value:
+                image[i][j] = 0
+
     return image
 
 
-def canny(image):
+def canny(image, high_ratio, low_ratio):
     ret = gaussian_smooth(image)
     ret, grad_x, grad_y = gradient_filter(ret, "sobel")
     grad = np.arctan2(grad_y, grad_x)
     ret = non_max_sup(ret, grad)
-    ret, strong_value, weak_value = double_thresholding(ret, 0.09, 0.03)
+    ret, strong_value, weak_value = double_thresholding(ret,
+                                                        high_ratio, low_ratio)
     ret = hysteresis(ret, strong_value, weak_value)
 
     return ret
@@ -232,11 +242,11 @@ def main():
 
     elif args.task == 2:
         img = get_input_image(args.image)
-        ret = canny(img)
+        ret = canny(img, args.high, args.low)
         img_name = os.path.split(args.image)
         img_name = img_name[-1]
         img_name = img_name[:-4]
-        filename = f'images/output/{img_name}_canny.png'
+        filename = f'images/output/{img_name}_canny_{str(args.high)}_{str(args.low)}.png'
         save_image(ret, filename)
 
 
